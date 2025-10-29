@@ -1,0 +1,1221 @@
+<!DOCTYPE <!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบวิเคราะห์ข้อมูลและพยากรณ์ยอดขาย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+            background:#E6E6FA;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-glass {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .stats-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-full">
+
+    
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="nav-glass shadow-lg border-b-4 border-blue-500">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">📊</span>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-800">ระบบวิเคราะห์ข้อมูลและการพยากรณ์ยอดขาย</h1>
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="showPage('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-blue-500 text-white">
+                            แดชบอร์ด
+                        </button>
+                        <button onclick="showPage('analysis')" id="nav-analysis" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                            วิเคราะห์ข้อมูล
+                        </button>
+                        <button onclick="showPage('forecast')" id="nav-forecast" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                            พยากรณ์ยอดขาย
+                        </button>
+                        <button onclick="showPage('calculator')" id="nav-calculator" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                            เครื่องคำนวณ
+                        </button>
+                        <button onclick="showPage('help')" id="nav-help" class="nav-btn px-4 py-2 rounded-lg font-medium transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                            ช่วยเหลือ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page-content">
+            <main class="max-w-7xl mx-auto px-4 py-8">
+                <div class="fade-in">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-8">แดชบอร์ดภาพรวม</h2>
+               
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="stats-card rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">ยอดขายรวม</p>
+                                    <p id="total-sales" class="text-2xl font-bold text-gray-400">฿0</p>
+                                    <p class="text-xs text-gray-500 mt-1">รอข้อมูลการวิเคราะห์</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-green-600 text-xl">💰</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-card rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">กำไรสุทธิ</p>
+                                    <p id="net-profit" class="text-2xl font-bold text-gray-400">฿0</p>
+                                    <p class="text-xs text-gray-500 mt-1">รอข้อมูลการวิเคราะห์</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-blue-600 text-xl">💰</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">อัตราการเติบโต</p>
+                                    <p id="growth-rate" class="text-2xl font-bold text-gray-400">0%</p>
+                                    <p class="text-xs text-gray-500 mt-1">จากข้อมูลที่วิเคราะห์</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-purple-600 text-xl">📈</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                    <!-- Chart -->
+                    <div class="glass-card rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">แนวโน้มยอดขายรายเดือน</h3>
+                        <div class="chart-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Analysis Page -->
+        <div id="analysis-page" class="page-content hidden">
+            <main class="max-w-7xl mx-auto px-4 py-8">
+                <div class="fade-in">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-8">วิเคราะห์ข้อมูลยอดขาย</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Input Form -->
+                        <div class="glass-card rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">ป้อนข้อมูลสำหรับวิเคราะห์</h3>
+                            <form id="analysisForm" class="space-y-4">
+                                <div>
+                                    <label for="salesData" class="block text-sm font-medium text-gray-700 mb-2">ข้อมูลยอดขาย (แยกด้วยเครื่องหมายจุลภาค)</label>
+                                    <textarea id="salesData" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 100000, 120000, 95000, 150000, 180000"></textarea>
+                                </div>
+                                <div>
+                                    <label for="period" class="block text-sm font-medium text-gray-700 mb-2">ช่วงเวลา</label>
+                                    <select id="period" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="monthly">รายเดือน</option>
+                                        <option value="quarterly">รายไตรมาส</option>
+                                        <option value="yearly">รายปี</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium">
+                                    วิเคราะห์ข้อมูล
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Results -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">ผลการวิเคราะห์</h3>
+                            <div id="analysisResults" class="space-y-4">
+                                <p class="text-gray-600">กรุณาป้อนข้อมูลเพื่อดูผลการวิเคราะห์</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">กราฟการวิเคราะห์</h3>
+                        <div class="chart-container">
+                            <canvas id="analysisChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Forecast Page -->
+        <div id="forecast-page" class="page-content hidden">
+            <main class="max-w-7xl mx-auto px-4 py-8">
+                <div class="fade-in">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-8">พยากรณ์ยอดขาย</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Forecast Input -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">ตั้งค่าการพยากรณ์</h3>
+                            <form id="forecastForm" class="space-y-4">
+                                <div>
+                                    <label for="historicalData" class="block text-sm font-medium text-gray-700 mb-2">ข้อมูลยอดขายในอดีต</label>
+                                    <textarea id="historicalData" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 100000, 110000, 105000, 125000, 140000, 135000"></textarea>
+                                </div>
+                                <div>
+                                    <label for="forecastPeriods" class="block text-sm font-medium text-gray-700 mb-2">จำนวนงวดที่ต้องการพยากรณ์</label>
+                                    <input type="number" id="forecastPeriods" min="1" max="12" value="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="growthRate" class="block text-sm font-medium text-gray-700 mb-2">อัตราการเติบโตที่คาดหวัง (%)</label>
+                                    <input type="number" id="growthRate" step="0.1" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors duration-200 font-medium">
+                                    สร้างการพยากรณ์
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Forecast Results -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">ผลการพยากรณ์</h3>
+                            <div id="forecastResults" class="space-y-4">
+                                <p class="text-gray-600">กรุณาป้อนข้อมูลเพื่อดูการพยากรณ์</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Forecast Chart -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">กราฟการพยากรณ์</h3>
+                        <div class="chart-container">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Calculator Page -->
+        <div id="calculator-page" class="page-content hidden">
+            <main class="max-w-7xl mx-auto px-4 py-8">
+                <div class="fade-in">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-8">เครื่องคำนวณทางการเงิน</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- ROI Calculator -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">คำนวณ ROI (Return on Investment)</h3>
+                            <form id="roiForm" class="space-y-4">
+                                <div>
+                                    <label for="investment" class="block text-sm font-medium text-gray-700 mb-2">เงินลงทุน (บาท)</label>
+                                    <input type="number" id="investment" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 100000">
+                                </div>
+                                <div>
+                                    <label for="revenue" class="block text-sm font-medium text-gray-700 mb-2">รายได้ที่ได้รับ (บาท)</label>
+                                    <input type="number" id="revenue" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 150000">
+                                </div>
+                                <button type="submit" class="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-colors duration-200 font-medium">
+                                    คำนวณ ROI
+                                </button>
+                            </form>
+                            <div id="roiResult" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                                <p class="font-medium text-gray-800">ผลการคำนวณ ROI:</p>
+                                <p id="roiValue" class="text-2xl font-bold text-purple-600"></p>
+                            </div>
+                        </div>
+
+                        <!-- Break-even Calculator -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">คำนวณจุดคุ้มทุน (Break-even Point)</h3>
+                            <form id="breakEvenForm" class="space-y-4">
+                                <div>
+                                    <label for="fixedCosts" class="block text-sm font-medium text-gray-700 mb-2">ต้นทุนคงที่ (บาท)</label>
+                                    <input type="number" id="fixedCosts" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 50000">
+                                </div>
+                                <div>
+                                    <label for="pricePerUnit" class="block text-sm font-medium text-gray-700 mb-2">ราคาขายต่อหน่วย (บาท)</label>
+                                    <input type="number" id="pricePerUnit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 100">
+                                </div>
+                                <div>
+                                    <label for="variableCostPerUnit" class="block text-sm font-medium text-gray-700 mb-2">ต้นทุนผันแปรต่อหน่วย (บาท)</label>
+                                    <input type="number" id="variableCostPerUnit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 60">
+                                </div>
+                                <button type="submit" class="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors duration-200 font-medium">
+                                    คำนวณจุดคุ้มทุน
+                                </button>
+                            </form>
+                            <div id="breakEvenResult" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                                <p class="font-medium text-gray-800">จุดคุ้มทุน:</p>
+                                <p id="breakEvenValue" class="text-2xl font-bold text-orange-600"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profit Margin Calculator -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">คำนวณอัตรากำไร (Profit Margin)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <form id="profitMarginForm" class="space-y-4">
+                                <div>
+                                    <label for="totalRevenue" class="block text-sm font-medium text-gray-700 mb-2">รายได้รวม (บาท)</label>
+                                    <input type="number" id="totalRevenue" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 500000">
+                                </div>
+                                <div>
+                                    <label for="totalCosts" class="block text-sm font-medium text-gray-700 mb-2">ต้นทุนรวม (บาท)</label>
+                                    <input type="number" id="totalCosts" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น: 350000">
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-600 transition-colors duration-200 font-medium">
+                                    คำนวณอัตรากำไร
+                                </button>
+                            </form>
+                            <div class="md:col-span-2">
+                                <div id="profitMarginResult" class="p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg hidden">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-sm text-gray-600">กำไรสุทธิ</p>
+                                            <p id="netProfit" class="text-xl font-bold text-indigo-600"></p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-600">อัตรากำไร</p>
+                                            <p id="profitMarginValue" class="text-xl font-bold text-indigo-600"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Help Page -->
+        <div id="help-page" class="page-content hidden">
+            <main class="max-w-7xl mx-auto px-4 py-8">
+                <div class="fade-in">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-8">ช่วยเหลือและคู่มือการใช้งาน</h2>
+                    
+                    <!-- College Information -->
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl shadow-lg p-8 mb-8 text-white">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                                <span class="text-3xl">🎓</span>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold">วิทยาลัยอาชีวศึกษาสระบุรี</h3>
+                                <p class="text-blue-100">Saraburi Technical College</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xl">📍</span>
+                                    <div>
+                                        <p class="font-semibold">ที่อยู่:</p>
+                                        <p class="text-blue-100">123 ถนนพหลโยธิน ตำบลปากเพรียว อำเภอเมือง จังหวัดสระบุรี 18000</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xl">📞</span>
+                                    <div>
+                                        <p class="font-semibold">โทรศัพท์:</p>
+                                        <p class="text-blue-100">036-211-234</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xl">📧</span>
+                                    <div>
+                                        <p class="font-semibold">อีเมล:</p>
+                                        <p class="text-blue-100">info@saraburitech.ac.th</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xl">🌐</span>
+                                    <div>
+                                        <p class="font-semibold">เว็บไซต์:</p>
+                                        <p class="text-blue-100">www.saraburitech.ac.th</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Guide -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Dashboard Guide -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-green-600 text-xl">📊</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800">การใช้งานแดชบอร์ด</h3>
+                            </div>
+                            <div class="space-y-3 text-gray-600">
+                                <p><strong>แดชบอร์ดแบบเรียลไทม์:</strong> ข้อมูลจะอัปเดตอัตโนมัติเมื่อคุณทำการวิเคราะห์หรือพยากรณ์ในหน้าอื่นๆ</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>ยอดขายรวม</strong> - คำนวณจากข้อมูลที่วิเคราะห์</li>
+                                    <li><strong>กำไรสุทธิ</strong> - คำนวณจากข้อมูลที่วิเคราะห์</li>
+                                    <li><strong>อัตราการเติบโต</strong> - คำนวณจากข้อมูลจริง</li>
+                                    
+                                </ul>
+                                <div class="bg-green-50 p-3 rounded-lg mt-4">
+                                    <p class="text-green-800 font-medium">💡 เคล็ดลับ: ลองป้อนข้อมูลในหน้าวิเคราะห์แล้วกลับมาดูแดชบอร์ด!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Guide -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-blue-600 text-xl">🔍</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800">การวิเคราะห์ข้อมูล</h3>
+                            </div>
+                            <div class="space-y-3 text-gray-600">
+                                <p><strong>วิธีป้อนข้อมูล:</strong></p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li>ป้อนตัวเลขแยกด้วยเครื่องหมายจุลภาค</li>
+                                    <li>ตัวอย่าง: 100000, 120000, 95000, 150000</li>
+                                    <li>เลือกช่วงเวลา: รายเดือน, รายไตรมาส, รายปี</li>
+                                </ul>
+                                <p><strong>ผลลัพธ์ที่ได้:</strong></p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li>ยอดขายรวม, ค่าเฉลี่ย, สูงสุด, ต่ำสุด</li>
+                                    <li>ส่วนเบี่ยงเบนมาตรฐาน</li>
+                                    <li>อัตราการเติบโต</li>
+                                    <li>กราฟแสดงแนวโน้ม</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Forecast Guide -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-purple-600 text-xl">🔮</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800">การพยากรณ์ยอดขาย</h3>
+                            </div>
+                            <div class="space-y-3 text-gray-600">
+                                <p><strong>ข้อมูลที่ต้องการ:</strong></p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li>ข้อมูลยอดขายในอดีต (อย่างน้อย 3 งวด)</li>
+                                    <li>จำนวนงวดที่ต้องการพยากรณ์ (1-12 งวด)</li>
+                                    <li>อัตราการเติบโตที่คาดหวัง (%)</li>
+                                </ul>
+                                <p><strong>วิธีการพยากรณ์:</strong></p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li>ใช้การถดถอยเชิงเส้นหาแนวโน้ม</li>
+                                    <li>ปรับด้วยอัตราการเติบโตที่กำหนด</li>
+                                    <li>แสดงผลเป็นกราฟและตาราง</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Calculator Guide -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <span class="text-orange-600 text-xl">🧮</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800">เครื่องคำนวณทางการเงิน</h3>
+                            </div>
+                            <div class="space-y-4 text-gray-600">
+                                <div>
+                                    <p class="font-semibold text-gray-800">ROI (Return on Investment):</p>
+                                    <p>คำนวณผลตอบแทนจากการลงทุน = (รายได้ - เงินลงทุน) / เงินลงทุน × 100</p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">จุดคุ้มทุน (Break-even Point):</p>
+                                    <p>คำนวณจำนวนหน่วยที่ต้องขายเพื่อคุ้มทุน = ต้นทุนคงที่ / (ราคาขาย - ต้นทุนผันแปร)</p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">อัตรากำไร (Profit Margin):</p>
+                                    <p>คำนวณเปอร์เซ็นต์กำไร = (รายได้ - ต้นทุน) / รายได้ × 100</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Section -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-6">คำถามที่พบบ่อย (FAQ)</h3>
+                        <div class="space-y-4">
+                            <div class="border-l-4 border-blue-500 pl-4">
+                                <h4 class="font-semibold text-gray-800">Q: ทำไมแดชบอร์ดไม่อัปเดต?</h4>
+                                <p class="text-gray-600">A: ตรวจสอบว่าได้ป้อนข้อมูลในหน้าวิเคราะห์หรือพยากรณ์แล้ว ระบบจะอัปเดตอัตโนมัติและแสดงการแจ้งเตือน</p>
+                            </div>
+                            <div class="border-l-4 border-green-500 pl-4">
+                                <h4 class="font-semibold text-gray-800">Q: ข้อมูลที่ป้อนควรเป็นรูปแบบใด?</h4>
+                                <p class="text-gray-600">A: ป้อนตัวเลขเท่านั้น แยกด้วยเครื่องหมายจุลภาค เช่น 100000, 120000, 95000</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4">
+                                <h4 class="font-semibold text-gray-800">Q: การพยากรณ์แม่นยำแค่ไหน?</h4>
+                                <p class="text-gray-600">A: การพยากรณ์เป็นการประมาณการจากข้อมูลในอดีต ความแม่นยำขึ้นอยู่กับคุณภาพและปริมาณข้อมูล</p>
+                            </div>
+                            <div class="border-l-4 border-orange-500 pl-4">
+                                <h4 class="font-semibold text-gray-800">Q: สามารถบันทึกข้อมูลได้หรือไม่?</h4>
+                                <p class="text-gray-600">A: ระบบจะเก็บข้อมูลไว้ในเซสชันปัจจุบัน หากต้องการบันทึกถาวร ควรจดบันทึกผลลัพธ์ไว้</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 mt-8 border-2 border-indigo-200">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">ติดต่อสอบถาม</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">ฝ่ายเทคโนโลยีสารสนเทศ</h4>
+                                <div class="space-y-2 text-gray-600">
+                                    <p>📞 โทร: 036-211-234 ต่อ 105</p>
+                                    <p>📧 อีเมล: it@saraburitech.ac.th</p>
+                                    <p>⏰ เวลาทำการ: จันทร์-ศุกร์ 8:00-16:30</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">ฝ่ายวิชาการ</h4>
+                                <div class="space-y-2 text-gray-600">
+                                    <p>📞 โทร: 036-211-234 ต่อ 102</p>
+                                    <p>📧 อีเมล: academic@saraburitech.ac.th</p>
+                                    <p>⏰ เวลาทำการ: จันทร์-ศุกร์ 8:00-16:30</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let salesChart, analysisChart, forecastChart;
+        
+        // Global data storage for real-time dashboard updates
+        let dashboardData = {
+            totalSales: 0,
+            netProfit: 0,
+            growthRate: 0,
+            avgOrderValue: 0,
+            lastAnalysisData: null,
+            lastForecastData: null,
+            profitMarginData: null
+        };
+        
+        // Update dashboard with real-time data
+        function updateDashboard() {
+            let hasUpdates = false;
+            
+            // Update total sales if we have analysis data
+            if (dashboardData.lastAnalysisData) {
+                const totalFromAnalysis = dashboardData.lastAnalysisData.reduce((a, b) => a + b, 0);
+                dashboardData.totalSales = totalFromAnalysis;
+                
+                // Calculate growth rate from analysis data
+                if (dashboardData.lastAnalysisData.length > 1) {
+                    const firstValue = dashboardData.lastAnalysisData[0];
+                    const lastValue = dashboardData.lastAnalysisData[dashboardData.lastAnalysisData.length - 1];
+                    dashboardData.growthRate = ((lastValue - firstValue) / firstValue) * 100;
+                }
+                
+                // Calculate average order value
+                dashboardData.avgOrderValue = Math.round(dashboardData.totalSales / dashboardData.lastAnalysisData.length);
+                
+                // Calculate net profit from profit margin calculator if available, otherwise estimate
+                if (dashboardData.profitMarginData) {
+                    dashboardData.netProfit = dashboardData.profitMarginData.netProfit;
+                } else {
+                    // Fallback: estimate 25% profit margin
+                    dashboardData.netProfit = Math.round(dashboardData.totalSales * 0.25);
+                }
+                hasUpdates = true;
+            }
+            
+            // Growth rate comes only from analysis data, not forecast
+            // Forecast data is stored but doesn't affect growth rate calculation
+            
+            // Update profit data if available from profit margin calculator
+            if (dashboardData.profitMarginData) {
+                dashboardData.netProfit = dashboardData.profitMarginData.netProfit;
+                hasUpdates = true;
+            }
+            
+            if (!hasUpdates) return;
+            
+            // Update DOM elements with animation
+            const updateElement = (id, value, className = 'text-2xl font-bold text-gray-800') => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.transform = 'scale(1.1)';
+                    element.style.transition = 'transform 0.3s ease';
+                    setTimeout(() => {
+                        element.textContent = value;
+                        element.className = className;
+                        element.style.transform = 'scale(1)';
+                    }, 150);
+                }
+            };
+            
+            updateElement('total-sales', 
+                '฿' + dashboardData.totalSales.toLocaleString('th-TH', {maximumFractionDigits: 0}));
+            
+            updateElement('net-profit', 
+                '฿' + dashboardData.netProfit.toLocaleString('th-TH', {maximumFractionDigits: 0}));
+            
+            const growthValue = (dashboardData.growthRate >= 0 ? '+' : '') + dashboardData.growthRate.toFixed(1) + '%';
+            const growthClass = dashboardData.growthRate >= 0 ? 
+                'text-2xl font-bold text-gray-800' : 'text-2xl font-bold text-red-600';
+            updateElement('growth-rate', growthValue, growthClass);
+            
+            updateElement('avg-order', 
+                '฿' + dashboardData.avgOrderValue.toLocaleString('th-TH', {maximumFractionDigits: 0}));
+            
+            // Update chart if it exists
+            if (salesChart && (dashboardData.lastAnalysisData || dashboardData.lastForecastData)) {
+                updateDashboardChart();
+            }
+            
+            // Show real-time update notification
+            showUpdateNotification('แดชบอร์ดอัปเดตแบบเรียลไทม์แล้ว! 📊');
+        }
+        
+        // Update dashboard chart with real data
+        function updateDashboardChart() {
+            if (!salesChart) return;
+            
+            let data = [];
+            let labels = [];
+            
+            // Use analysis data if available
+            if (dashboardData.lastAnalysisData) {
+                data = [...dashboardData.lastAnalysisData];
+                labels = data.map((_, index) => `งวด ${index + 1}`);
+            }
+            
+            // Add forecast data if available
+            if (dashboardData.lastForecastData) {
+                const forecastLabels = dashboardData.lastForecastData.map((_, index) => `พยากรณ์ ${index + 1}`);
+                labels.push(...forecastLabels);
+                data.push(...dashboardData.lastForecastData);
+            }
+            
+            salesChart.data.labels = labels;
+            salesChart.data.datasets[0].data = data;
+            
+            // Update chart title based on data availability
+            if (data.length > 0) {
+                salesChart.options.plugins.title.display = false;
+            } else {
+                salesChart.options.plugins.title.display = true;
+            }
+            
+            salesChart.update();
+        }
+        
+        // Navigation
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId + '-page').classList.remove('hidden');
+            
+            // Update navigation buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+            });
+            
+            document.getElementById('nav-' + pageId).classList.remove('text-gray-600', 'hover:bg-gray-100');
+            document.getElementById('nav-' + pageId).classList.add('bg-blue-500', 'text-white');
+            
+            // Initialize charts when needed
+            if (pageId === 'dashboard' && !salesChart) {
+                initSalesChart();
+            }
+        }
+
+        // Initialize Sales Chart
+        function initSalesChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            salesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'ยอดขาย (บาท)',
+                        data: [],
+                        borderColor:['rgb(59, 130, 246)',
+                                     'rgb(139, 92, 246)',
+                                     'rgb(236, 72, 153)',
+                                     'rgb(16, 185, 129)',
+                                     'rgb(245, 158, 11)',
+                                     'rgb(239, 68, 68)'
+                                    ],
+                   
+                        backgroundColor: [ 'rgba(59, 130, 246, 0.6)',   // ฟ้าโปร่งแสง
+                                           'rgba(139, 92, 246, 0.6)',   // ม่วงโปร่งแสง
+                                           'rgba(236, 72, 153, 0.6)',   // ชมพูโปร่งแสง
+                                           'rgba(16, 185, 129, 0.6)',   // เขียวโปร่งแสง
+                                           'rgba(245, 158, 11, 0.6)',   // เหลืองโปร่งแสง
+                                           'rgba(239, 68, 68, 0.6)'     // แดงโปร่งแสง
+                                         ],
+                        borderWidth : 2,       
+                    }]
+               
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'กรุณาป้อนข้อมูลในหน้าวิเคราะห์หรือพยากรณ์เพื่อดูกราฟ',
+                            color: '#9CA3AF',
+                            font: {
+                                size: 14
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#3B82F6',
+                            borderWidth: 2,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `ยอดขาย: ฿${context.parsed.y.toLocaleString('th-TH')}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '฿' + value.toLocaleString('th-TH');
+                                },
+                                color: '#6B7280',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#6B7280',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    elements: {
+                        point: {
+                            hoverRadius: 8
+                        }
+                    }
+                }
+            });
+        }
+
+        // Analysis Form Handler
+        document.getElementById('analysisForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const salesData = document.getElementById('salesData').value;
+            const period = document.getElementById('period').value;
+            
+            if (!salesData.trim()) {
+                alert('กรุณาป้อนข้อมูลยอดขาย');
+                return;
+            }
+            
+            const data = salesData.split(',').map(num => parseFloat(num.trim())).filter(num => !isNaN(num));
+            
+            if (data.length === 0) {
+                alert('กรุณาป้อนข้อมูลที่ถูกต้อง');
+                return;
+            }
+            
+            analyzeData(data, period);
+        });
+
+        function analyzeData(data, period) {
+            const sum = data.reduce((a, b) => a + b, 0);
+            const average = sum / data.length;
+            const max = Math.max(...data);
+            const min = Math.min(...data);
+            const variance = data.reduce((acc, val) => acc + Math.pow(val - average, 2), 0) / data.length;
+            const stdDev = Math.sqrt(variance);
+            
+            // Calculate growth rate
+            let growthRate = 0;
+            if (data.length > 1) {
+                growthRate = ((data[data.length - 1] - data[0]) / data[0]) * 100;
+            }
+            
+            const resultsHtml = `
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-lg border-2 border-indigo-200">
+                        <span class="font-medium">ยอดขายรวมทั้งหมด:</span>
+                        <span class="font-bold text-indigo-700 text-lg">฿${sum.toLocaleString('th-TH', {maximumFractionDigits: 0})}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                        <span class="font-medium">ค่าเฉลี่ย:</span>
+                        <span class="font-bold text-blue-600">฿${average.toLocaleString('th-TH', {maximumFractionDigits: 0})}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                        <span class="font-medium">ยอดขายสูงสุด:</span>
+                        <span class="font-bold text-green-600">฿${max.toLocaleString('th-TH')}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                        <span class="font-medium">ยอดขายต่ำสุด:</span>
+                        <span class="font-bold text-red-600">฿${min.toLocaleString('th-TH')}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                        <span class="font-medium">ส่วนเบี่ยงเบนมาตรฐาน:</span>
+                        <span class="font-bold text-purple-600">฿${stdDev.toLocaleString('th-TH', {maximumFractionDigits: 0})}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                        <span class="font-medium">อัตราการเติบโต:</span>
+                        <span class="font-bold ${growthRate >= 0 ? 'text-green-600' : 'text-red-600'}">${growthRate.toFixed(2)}%</span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('analysisResults').innerHTML = resultsHtml;
+            
+            // Store analysis data for dashboard updates
+            dashboardData.lastAnalysisData = [...data];
+            updateDashboard();
+            
+            // Update analysis chart
+            updateAnalysisChart(data, period);
+        }
+
+        function updateAnalysisChart(data, period) {
+            const ctx = document.getElementById('analysisChart').getContext('2d');
+            
+            if (analysisChart) {
+                analysisChart.destroy();
+            }
+            
+            const labels = data.map((_, index) => `${period === 'monthly' ? 'เดือน' : period === 'quarterly' ? 'ไตรมาส' : 'ปี'} ${index + 1}`);
+            
+            analysisChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ยอดขาย',
+                        data: data,
+                        backgroundColor: [
+                            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+                            '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+                            '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 4,
+                        hoverBorderWidth: 6,
+                        hoverBorderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '50%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ฿${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1500
+                    }
+                }
+            });
+        }
+
+        // Forecast Form Handler
+        document.getElementById('forecastForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const historicalData = document.getElementById('historicalData').value;
+            const forecastPeriods = parseInt(document.getElementById('forecastPeriods').value);
+            const growthRate = parseFloat(document.getElementById('growthRate').value) / 100;
+            
+            if (!historicalData.trim()) {
+                alert('กรุณาป้อนข้อมูลยอดขายในอดีต');
+                return;
+            }
+            
+            const data = historicalData.split(',').map(num => parseFloat(num.trim())).filter(num => !isNaN(num));
+            
+            if (data.length === 0) {
+                alert('กรุณาป้อนข้อมูลที่ถูกต้อง');
+                return;
+            }
+            
+            generateForecast(data, forecastPeriods, growthRate);
+        });
+
+        function generateForecast(historicalData, periods, growthRate) {
+            // Simple linear regression for trend
+            const n = historicalData.length;
+            const x = Array.from({length: n}, (_, i) => i + 1);
+            const y = historicalData;
+            
+            const sumX = x.reduce((a, b) => a + b, 0);
+            const sumY = y.reduce((a, b) => a + b, 0);
+            const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
+            const sumXX = x.reduce((acc, xi) => acc + xi * xi, 0);
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            // Generate forecast
+            const forecast = [];
+            const lastValue = historicalData[historicalData.length - 1];
+            
+            for (let i = 1; i <= periods; i++) {
+                const trendValue = slope * (n + i) + intercept;
+                const growthAdjusted = lastValue * Math.pow(1 + growthRate, i);
+                const forecastValue = (trendValue + growthAdjusted) / 2; // Average of trend and growth
+                forecast.push(Math.max(0, forecastValue));
+            }
+            
+            // Store forecast data for dashboard updates
+            dashboardData.lastForecastData = [...forecast];
+            updateDashboard();
+            
+            displayForecastResults(forecast, periods);
+            updateForecastChart(historicalData, forecast);
+        }
+
+        function displayForecastResults(forecast, periods) {
+            const totalForecast = forecast.reduce((a, b) => a + b, 0);
+            const avgForecast = totalForecast / periods;
+            
+            const resultsHtml = `
+                <div class="space-y-3">
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <h4 class="font-bold text-green-800 mb-2">การพยากรณ์ ${periods} งวดข้างหน้า:</h4>
+                        ${forecast.map((value, index) => `
+                            <div class="flex justify-between items-center py-1">
+                                <span>งวดที่ ${index + 1}:</span>
+                                <span class="font-bold">฿${value.toLocaleString('th-TH', {maximumFractionDigits: 0})}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                        <span class="font-medium">ยอดขายรวมที่คาดการณ์:</span>
+                        <span class="font-bold text-blue-600">฿${totalForecast.toLocaleString('th-TH', {maximumFractionDigits: 0})}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                        <span class="font-medium">ค่าเฉลี่ยต่องวด:</span>
+                        <span class="font-bold text-purple-600">฿${avgForecast.toLocaleString('th-TH', {maximumFractionDigits: 0})}</span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('forecastResults').innerHTML = resultsHtml;
+        }
+
+        function updateForecastChart(historical, forecast) {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            if (forecastChart) {
+                forecastChart.destroy();
+            }
+            
+            const historicalLabels = historical.map((_, index) => `งวด ${index + 1}`);
+            const forecastLabels = forecast.map((_, index) => `พยากรณ์ ${index + 1}`);
+            const allLabels = [...historicalLabels, ...forecastLabels];
+            const allData = [...historical, ...forecast];
+            
+            forecastChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: allLabels,
+                    datasets: [{
+                        label: 'ข้อมูลรวม',
+                        data: allData,
+                        backgroundColor: [
+                            // Historical data colors (cooler tones)
+                            ...historical.map((_, i) => ['#3B82F6', '#1E40AF', '#1D4ED8', '#2563EB', '#3730A3'][i % 5]),
+                            // Forecast data colors (warmer tones)
+                            ...forecast.map((_, i) => ['#10B981', '#059669', '#047857', '#065F46', '#064E3B'][i % 5])
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverBorderWidth: 5,
+                        hoverBorderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 12,
+                                font: {
+                                    size: 10,
+                                    weight: 'bold'
+                                },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => ({
+                                        text: label,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        strokeStyle: data.datasets[0].borderColor,
+                                        lineWidth: data.datasets[0].borderWidth,
+                                        pointStyle: 'circle',
+                                        hidden: false,
+                                        index: i
+                                    }));
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    const isHistorical = context.dataIndex < historical.length;
+                                    const type = isHistorical ? '(ข้อมูลจริง)' : '(พยากรณ์)';
+                                    return `${label} ${type}: ฿${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 2000
+                    }
+                }
+            });
+        }
+
+        // ROI Calculator
+        document.getElementById('roiForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const investment = parseFloat(document.getElementById('investment').value);
+            const revenue = parseFloat(document.getElementById('revenue').value);
+            
+            if (isNaN(investment) || isNaN(revenue) || investment <= 0) {
+                alert('กรุณาป้อนข้อมูลที่ถูกต้อง');
+                return;
+            }
+            
+            const roi = ((revenue - investment) / investment) * 100;
+            
+            document.getElementById('roiValue').textContent = roi.toFixed(2) + '%';
+            document.getElementById('roiResult').classList.remove('hidden');
+        });
+
+        // Break-even Calculator
+        document.getElementById('breakEvenForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fixedCosts = parseFloat(document.getElementById('fixedCosts').value);
+            const pricePerUnit = parseFloat(document.getElementById('pricePerUnit').value);
+            const variableCostPerUnit = parseFloat(document.getElementById('variableCostPerUnit').value);
+            
+            if (isNaN(fixedCosts) || isNaN(pricePerUnit) || isNaN(variableCostPerUnit) || 
+                fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
+                alert('กรุณาป้อนข้อมูลที่ถูกต้อง');
+                return;
+            }
+            
+            if (pricePerUnit <= variableCostPerUnit) {
+                alert('ราคาขายต่อหน่วยต้องมากกว่าต้นทุนผันแปรต่อหน่วย');
+                return;
+            }
+            
+            const breakEvenUnits = fixedCosts / (pricePerUnit - variableCostPerUnit);
+            
+            document.getElementById('breakEvenValue').textContent = Math.ceil(breakEvenUnits).toLocaleString() + ' หน่วย';
+            document.getElementById('breakEvenResult').classList.remove('hidden');
+        });
+
+        // Profit Margin Calculator
+        document.getElementById('profitMarginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const totalRevenue = parseFloat(document.getElementById('totalRevenue').value);
+            const totalCosts = parseFloat(document.getElementById('totalCosts').value);
+            
+            if (isNaN(totalRevenue) || isNaN(totalCosts) || totalRevenue <= 0 || totalCosts < 0) {
+                alert('กรุณาป้อนข้อมูลที่ถูกต้อง');
+                return;
+            }
+            
+            const netProfit = totalRevenue - totalCosts;
+            const profitMargin = (netProfit / totalRevenue) * 100;
+            
+            // Store profit margin data for dashboard updates
+            dashboardData.profitMarginData = {
+                netProfit: netProfit,
+                profitMargin: profitMargin,
+                totalRevenue: totalRevenue,
+                totalCosts: totalCosts
+            };
+            
+            // Update dashboard with new profit data
+            updateDashboard();
+            
+            document.getElementById('netProfit').textContent = '฿' + netProfit.toLocaleString('th-TH');
+            document.getElementById('profitMarginValue').textContent = profitMargin.toFixed(2) + '%';
+            document.getElementById('profitMarginResult').classList.remove('hidden');
+        });
+
+        // Show notification when dashboard updates
+        function showUpdateNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Enhanced notification system for real-time updates
+        function showRealtimeIndicator() {
+            // Add real-time indicator to dashboard title
+            const dashboardTitle = document.querySelector('#dashboard-page h2');
+            if (dashboardTitle && !dashboardTitle.querySelector('.realtime-indicator')) {
+                const indicator = document.createElement('span');
+                indicator.className = 'realtime-indicator inline-flex items-center ml-3 px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full';
+                indicator.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>เรียลไทม์';
+                dashboardTitle.appendChild(indicator);
+            }
+        }
+        
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', function() {
+            showPage('dashboard');
+            showRealtimeIndicator();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'990f9727937def6c',t:'MTc2MDg2OTcyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
