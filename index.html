@@ -1213,6 +1213,27 @@
         
         // Initialize dashboard on load
         document.addEventListener('DOMContentLoaded', function() {
+            const savedTotalSales = localStorage.getItem('total_sales_value');
+            const savedNetProfit = localStorage.getItem('net_profit_value');
+            const savedGrowthRate = localStorage.getItem('growth_rate_value');
+
+        if (savedTotalSales) {
+            document.getElementById('saved-total-sales').textContent = '฿' + parseFloat(savedTotalSales).toLocaleString();
+            document.getElementById('saved-total-sales').classList.remove('text-gray-400');
+            document.getElementById('saved-total-sales').classList.add('text-green-600'); 
+        }
+
+        if (savedNetProfit) {
+            document.getElementById('saved-net-profit').textContent = '฿' + parseFloat(savedNetProfit).toLocaleString();
+            document.getElementById('saved-net-profit').classList.remove('text-gray-400');
+            document.getElementById('saved-net-profit').classList.add('text-blue-600'); 
+        }
+
+        if (savedGrowthRate) {
+            document.getElementById('saved-growth-rate').textContent = savedGrowthRate;
+            document.getElementById('saved-growth-rate').classList.remove('text-gray-400');
+            document.getElementById('saved-growth-rate').classList.add('text-purple-600'); 
+        }
             showPage('dashboard');
             showRealtimeIndicator();
         });
