@@ -1213,30 +1213,9 @@
         
         // Initialize dashboard on load
         document.addEventListener('DOMContentLoaded', function() {
-            const savedTotalSales = localStorage.getItem('total_sales_value');
-            const savedNetProfit = localStorage.getItem('net_profit_value');
-            const savedGrowthRate = localStorage.getItem('growth_rate_value');
-
-        if (savedTotalSales) {
-            document.getElementById('saved-total-sales').textContent = '฿' + parseFloat(savedTotalSales).toLocaleString();
-            document.getElementById('saved-total-sales').classList.remove('text-gray-400');
-            document.getElementById('saved-total-sales').classList.add('text-green-600'); 
-        }
-
-        if (savedNetProfit) {
-            document.getElementById('saved-net-profit').textContent = '฿' + parseFloat(savedNetProfit).toLocaleString();
-            document.getElementById('saved-net-profit').classList.remove('text-gray-400');
-            document.getElementById('saved-net-profit').classList.add('text-blue-600'); 
-        }
-
-        if (savedGrowthRate) {
-            document.getElementById('saved-growth-rate').textContent = savedGrowthRate;
-            document.getElementById('saved-growth-rate').classList.remove('text-gray-400');
-            document.getElementById('saved-growth-rate').classList.add('text-purple-600'); 
-        }
             showPage('dashboard');
             showRealtimeIndicator();
         });
-</script>
+    </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'990f9727937def6c',t:'MTc2MDg2OTcyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
