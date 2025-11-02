@@ -1238,5 +1238,359 @@
             showRealtimeIndicator();
         });
     </script>
+    <script>
+    // Global data storage for charts and dashboard
+    let salesChartInstance = null;
+    let analysisChartInstance = null;
+    let forecastChartInstance = null;
+    let dashboardData = {
+        labels: [],
+        data: [],
+        netProfitData: { totalRevenue: 0, netProfit: 0, profitMargin: 0, totalCosts: 0 }
+    };
+
+    // --- Core Functions ---
+
+    // 1. Page Switching Function
+    function showPage(pageId) {
+        document.querySelectorAll('.page-content').forEach(page => {
+            page.classList.add('hidden');
+        });
+        document.getElementById(pageId + '-page').classList.remove('hidden');
+
+        // Update nav button active state
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('bg-blue-500', 'text-white');
+            btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+        });
+        const activeNav = document.getElementById('nav-' + pageId);
+        if (activeNav) {
+            activeNav.classList.remove('text-gray-600', 'hover:bg-gray-100');
+            activeNav.classList.add('bg-blue-500', 'text-white');
+        }
+
+        // Show real-time indicator on dashboard if on dashboard page
+        if (pageId === 'dashboard') {
+            updateDashboard(true);
+        }
+    }
+
+    // 2. Chart Initialization and Update
+    function initializeChart(ctx, type, data, options) {
+        return new Chart(ctx, { type, data, options });
+    }
+
+    function updateCharts() {
+        // Dashboard Chart
+        const dashCtx = document.getElementById('salesChart').getContext('2d');
+        if (salesChartInstance) salesChartInstance.destroy();
+        
+        // Use default data if no analysis has been run
+        const defaultLabels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'];
+        const defaultData = [100000, 120000, 95000, 150000, 180000, 170000];
+
+        salesChartInstance = initializeChart(dashCtx, 'line', {
+            labels: dashboardData.labels.length > 0 ? dashboardData.labels : defaultLabels,
+            datasets: [{
+                label: 'ยอดขาย (บาท)',
+                data: dashboardData.data.length > 0 ? dashboardData.data : defaultData,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        }, {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: false, ticks: { callback: (value) => value.toLocaleString() } } }
+        });
+    }
+
+    // 3. Dashboard Update Logic
+    function updateDashboard(silent = false) {
+        // Fetch values from Local Storage (where Profit Margin Calculator saves data)
+        const totalSales = parseFloat(localStorage.getItem('total_sales_value') || 0);
+        const netProfit = parseFloat(localStorage.getItem('net_profit_value') || 0);
+        const growthRate = localStorage.getItem('growth_rate_value') || '0%';
+
+        // Update Stat Cards
+        document.getElementById('saved-total-sales').textContent = '฿' + totalSales.toLocaleString('th-TH');
+        document.getElementById('saved-net-profit').textContent = '฿' + netProfit.toLocaleString('th-TH');
+        document.getElementById('saved-growth-rate').textContent = growthRate;
+
+        // Apply color styles
+        document.getElementById('saved-total-sales').className = 'text-2xl font-bold ' + (totalSales > 0 ? 'text-green-600' : 'text-gray-400');
+        document.getElementById('saved-net-profit').className = 'text-2xl font-bold ' + (netProfit > 0 ? 'text-blue-600' : 'text-gray-400');
+        
+        const growthValue = parseFloat(growthRate.replace('%', ''));
+        let growthColor = 'text-gray-400';
+        if (growthValue > 0) growthColor = 'text-purple-600';
+        else if (growthValue < 0) growthColor = 'text-red-600';
+        document.getElementById('saved-growth-rate').className = 'text-2xl font-bold ' + growthColor;
+
+        if (!silent) {
+            showUpdateNotification('แดชบอร์ดอัปเดตข้อมูลล่าสุดเรียบร้อยแล้ว!');
+        }
+        updateCharts();
+    }
+
+    // Utility for notifications (optional but recommended)
+    function showUpdateNotification(message) {
+        // Simple alert for now, can be replaced by a fancy toast notification
+        console.log("Notification: " + message);
+    }
+
+    // --- Calculators and Analysis Functions ---
+
+    // ** 4. Analysis Page Logic **
+    document.getElementById('analysisForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const salesDataInput = document.getElementById('salesData').value;
+        const period = document.getElementById('period').value;
+
+        const salesArray = salesDataInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n >= 0);
+
+        if (salesArray.length === 0) {
+            document.getElementById('analysisResults').innerHTML = '<p class="text-red-500">กรุณาป้อนข้อมูลยอดขายที่ถูกต้อง</p>';
+            return;
+        }
+
+        // Calculations
+        const sum = salesArray.reduce((acc, val) => acc + val, 0);
+        const mean = sum / salesArray.length;
+        const max = Math.max(...salesArray);
+        const min = Math.min(...salesArray);
+        const variance = salesArray.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / salesArray.length;
+        const stdDev = Math.sqrt(variance);
+
+        const growthRate = salesArray.length > 1 
+            ? (((salesArray[salesArray.length - 1] - salesArray[0]) / salesArray[0]) * 100).toFixed(2)
+            : '0.00';
+
+        // Update Dashboard Data (Simulated for chart)
+        dashboardData.data = salesArray;
+        dashboardData.labels = salesArray.map((_, i) => `${i + 1} (${period.charAt(0)})`);
+        
+        // Store results for Dashboard (Simulated Net Profit for display purposes)
+        localStorage.setItem('total_sales_value', sum.toString());
+        localStorage.setItem('net_profit_value', (sum * 0.2).toString()); // Simulate 20% net profit
+        localStorage.setItem('growth_rate_value', growthRate + '%');
+        updateDashboard();
+
+
+        // Display Results
+        const resultsHtml = `
+            <div class="space-y-2">
+                <p>📊 ยอดขายรวม: <strong class="text-blue-600">฿${sum.toLocaleString('th-TH')}</strong></p>
+                <p>📈 อัตราการเติบโต: <strong class="text-green-600">${growthRate}%</strong></p>
+                <p>💰 ยอดขายเฉลี่ย: <strong class="text-gray-800">฿${mean.toLocaleString('th-TH', { maximumFractionDigits: 0 })}</strong></p>
+                <p>⬆️ ยอดขายสูงสุด: <strong class="text-red-600">฿${max.toLocaleString('th-TH')}</strong></p>
+                <p>⬇️ ยอดขายต่ำสุด: <strong class="text-red-600">฿${min.toLocaleString('th-TH')}</strong></p>
+                <p>📏 ส่วนเบี่ยงเบนมาตรฐาน: <strong class="text-purple-600">${stdDev.toLocaleString('th-TH', { maximumFractionDigits: 2 })}</strong></p>
+            </div>
+        `;
+        document.getElementById('analysisResults').innerHTML = resultsHtml;
+
+        // Update Analysis Chart
+        const analysisCtx = document.getElementById('analysisChart').getContext('2d');
+        if (analysisChartInstance) analysisChartInstance.destroy();
+        analysisChartInstance = initializeChart(analysisCtx, 'bar', {
+            labels: dashboardData.labels,
+            datasets: [{
+                label: 'ยอดขาย',
+                data: salesArray,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: '#3b82f6',
+                borderWidth: 1
+            }, {
+                label: 'ค่าเฉลี่ย',
+                data: Array(salesArray.length).fill(mean),
+                type: 'line',
+                borderColor: '#ef4444',
+                borderWidth: 2,
+                pointRadius: 0
+            }]
+        }, {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: false, ticks: { callback: (value) => value.toLocaleString() } } }
+        });
+    });
+
+    // ** 5. Forecast Page Logic (Simple Linear Regression) **
+    document.getElementById('forecastForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const historicalDataInput = document.getElementById('historicalData').value;
+        const forecastPeriods = parseInt(document.getElementById('forecastPeriods').value);
+        const growthRate = parseFloat(document.getElementById('growthRate').value) / 100;
+
+        const historicalArray = historicalDataInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n >= 0);
+
+        if (historicalArray.length < 3) {
+            document.getElementById('forecastResults').innerHTML = '<p class="text-red-500">ต้องมีข้อมูลยอดขายในอดีตอย่างน้อย 3 งวด</p>';
+            return;
+        }
+
+        // Linear Regression calculation
+        const n = historicalArray.length;
+        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        const xValues = historicalArray.map((_, i) => i + 1);
+
+        xValues.forEach((x, i) => {
+            const y = historicalArray[i];
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumXX += x * x;
+        });
+
+        const meanX = sumX / n;
+        const meanY = sumY / n;
+
+        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        const intercept = meanY - slope * meanX;
+
+        // Forecasting
+        let forecastValues = [];
+        for (let i = 1; i <= forecastPeriods; i++) {
+            const xForecast = n + i;
+            let linearForecast = slope * xForecast + intercept;
+            // Adjust forecast by expected growth rate
+            let adjustedForecast = linearForecast * (1 + growthRate * i);
+            forecastValues.push(Math.max(0, adjustedForecast)); // Ensure no negative sales
+        }
+
+        const allSalesData = [...historicalArray, ...forecastValues];
+        const allLabels = [...xValues.map(x => `อดีต ${x}`), ...forecastValues.map((_, i) => `พยากรณ์ ${i + 1}`)];
+        const totalForecast = forecastValues.reduce((a, b) => a + b, 0);
+
+        // Display Results
+        let resultsHtml = `<p>🔮 ยอดขายพยากรณ์รวม ${forecastPeriods} งวด: <strong class="text-green-600">฿${totalForecast.toLocaleString('th-TH', { maximumFractionDigits: 0 })}</strong></p>`;
+        resultsHtml += '<h4 class="font-semibold mt-4 mb-2">รายละเอียดแต่ละงวด:</h4>';
+        resultsHtml += '<ul class="list-disc list-inside space-y-1 ml-4">';
+        forecastValues.forEach((val, i) => {
+            resultsHtml += `<li>งวดที่ ${i + 1}: <strong>฿${val.toLocaleString('th-TH', { maximumFractionDigits: 0 })}</strong></li>`;
+        });
+        resultsHtml += '</ul>';
+        document.getElementById('forecastResults').innerHTML = resultsHtml;
+
+        // Update Forecast Chart
+        const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+        if (forecastChartInstance) forecastChartInstance.destroy();
+        forecastChartInstance = initializeChart(forecastCtx, 'line', {
+            labels: allLabels,
+            datasets: [
+                {
+                    label: 'ยอดขายจริง',
+                    data: historicalArray,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: false,
+                    tension: 0.2
+                },
+                {
+                    label: 'พยากรณ์',
+                    data: Array(historicalArray.length).fill(null).concat(forecastValues),
+                    borderColor: '#4caf50',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.2
+                }
+            ]
+        }, {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: false, ticks: { callback: (value) => value.toLocaleString() } } }
+        });
+    });
+
+
+    // ** 6. ROI Calculator **
+    document.getElementById('roiForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const investment = parseFloat(document.getElementById('investment').value);
+        const revenue = parseFloat(document.getElementById('revenue').value);
+
+        if (isNaN(investment) || isNaN(revenue) || investment <= 0) {
+            document.getElementById('roiValue').textContent = 'ข้อมูลไม่ถูกต้อง';
+            document.getElementById('roiResult').classList.remove('hidden');
+            return;
+        }
+
+        const roi = ((revenue - investment) / investment) * 100;
+        
+        document.getElementById('roiValue').textContent = roi.toFixed(2) + '%';
+        document.getElementById('roiResult').classList.remove('hidden');
+    });
+
+    // ** 7. Break-Even Calculator **
+    document.getElementById('breakEvenForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fixedCosts = parseFloat(document.getElementById('fixedCosts').value);
+        const pricePerUnit = parseFloat(document.getElementById('pricePerUnit').value);
+        const variableCostPerUnit = parseFloat(document.getElementById('variableCostPerUnit').value);
+
+        if (isNaN(fixedCosts) || isNaN(pricePerUnit) || isNaN(variableCostPerUnit) || pricePerUnit <= variableCostPerUnit) {
+            document.getElementById('breakEvenValue').textContent = 'ข้อมูลไม่ถูกต้อง (ราคาต้องสูงกว่าต้นทุนผันแปร)';
+            document.getElementById('breakEvenResult').classList.remove('hidden');
+            return;
+        }
+
+        const contributionMargin = pricePerUnit - variableCostPerUnit;
+        const breakEvenUnits = fixedCosts / contributionMargin;
+        const breakEvenRevenue = breakEvenUnits * pricePerUnit;
+
+        const resultHtml = `
+            <p><strong>จำนวนหน่วยที่ต้องขาย:</strong> ${breakEvenUnits.toLocaleString('th-TH', { maximumFractionDigits: 0 })} หน่วย</p>
+            <p><strong>รายได้ที่จุดคุ้มทุน:</strong> ฿${breakEvenRevenue.toLocaleString('th-TH', { maximumFractionDigits: 0 })}</p>
+        `;
+        
+        document.getElementById('breakEvenValue').innerHTML = resultHtml;
+        document.getElementById('breakEvenResult').classList.remove('hidden');
+    });
+
+    // ** 8. Profit Margin Calculator (ขั้นตอนที่ 3: บันทึกข้อมูล) **
+    document.getElementById('profitMarginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const totalRevenue = parseFloat(document.getElementById('totalRevenue').value);
+        const totalCosts = parseFloat(document.getElementById('totalCosts').value);
+
+        if (isNaN(totalRevenue) || isNaN(totalCosts) || totalRevenue < 0) {
+            document.getElementById('netProfit').textContent = 'ข้อมูลไม่ถูกต้อง';
+            document.getElementById('profitMarginValue').textContent = 'N/A';
+            document.getElementById('profitMarginResult').classList.remove('hidden');
+            return;
+        }
+
+        const netProfit = totalRevenue - totalCosts;
+        const profitMargin = (netProfit / totalRevenue) * 100;
+
+        // -----------------------------------------------------
+        // 💾 ตำแหน่งสำหรับ 'ขั้นตอนที่ 3: บันทึกข้อมูล'
+        // -----------------------------------------------------
+        localStorage.setItem('total_sales_value', totalRevenue.toString());
+        localStorage.setItem('net_profit_value', netProfit.toString());
+        localStorage.setItem('growth_rate_value', profitMargin.toFixed(2) + '%');
+        // -----------------------------------------------------
+
+        // Update display on Calculator page
+        document.getElementById('netProfit').textContent = '฿' + netProfit.toLocaleString('th-TH');
+        document.getElementById('profitMarginValue').textContent = profitMargin.toFixed(2) + '%';
+        document.getElementById('profitMarginResult').classList.remove('hidden');
+
+        // Update dashboard immediately
+        updateDashboard(true);
+    });
+
+    // --- Initialization ---
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Load initial data for the dashboard when the page loads
+        updateDashboard(true); 
+        // Ensure the Dashboard page is shown by default
+        showPage('dashboard');
+    });
+
+</script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'990f9727937def6c',t:'MTc2MDg2OTcyNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
